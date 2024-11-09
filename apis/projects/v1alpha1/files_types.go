@@ -39,6 +39,7 @@ type FileParameters struct {
 	// ProjectID is the ID of the project to create the file in.
 	// +optional
 	// +immutable
+	// +crossplane:generate:reference:type=github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1.Project
 	ProjectID *int `json:"projectId,omitempty"`
 
 	// ProjectIDRef is a reference to a project to retrieve its projectId.
@@ -51,17 +52,26 @@ type FileParameters struct {
 	ProjectIDSelector *xpv1.Selector `json:"projectIdSelector,omitempty"`
 
 	// Name of the new branch to create. The commit is added to this branch.
+	// +required
 	Branch *string `json:"branch"`
 
 	// The commit message.
+	// +required
 	CommitMessage *string `json:"commitMessage"`
 
 	// The file’s content.
+	// +required
 	Content *string `json:"content"`
 
 	// Regex to check URL-encoding pattern!
 	// URL-encoded full path to new file. For example: lib%2Fclass%2Erb.
+	// +required
 	FilePath *string `json:"filePath"`
+
+	// Regex to check URL-encoding pattern!
+	// The ID or URL-encoded path of the project.
+	// +required
+	Id *string `json:"id"`
 
 	// The commit author’s email address.
 	// +optional

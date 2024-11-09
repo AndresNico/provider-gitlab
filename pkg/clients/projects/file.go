@@ -33,10 +33,10 @@ const (
 
 // HookClient defines Gitlab Hook service operations
 type FileClient interface {
-	GetFile(pid interface{}, file string, opt *gitlab.GetFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.File, *gitlab.Response, error)
-	CreateFile(pid interface{}, file string, opt *gitlab.CreateFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.FileInfo, *gitlab.Response, error)
-	UpdateFile(pid interface{}, file string, opt *gitlab.UpdateFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.FileInfo, *gitlab.Response, error)
-	DeleteFile(pid interface{}, file string, opt *gitlab.DeleteFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
+	GetFile(pid interface{}, fileName string, opt *gitlab.GetFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.File, *gitlab.Response, error)
+	CreateFile(pid interface{}, fileName string, opt *gitlab.CreateFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.FileInfo, *gitlab.Response, error)
+	UpdateFile(pid interface{}, fileName string, opt *gitlab.UpdateFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.FileInfo, *gitlab.Response, error)
+	DeleteFile(pid interface{}, fileName string, opt *gitlab.DeleteFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.Response, error)
 }
 
 // NewHookClient returns a new Gitlab Project service
@@ -51,6 +51,24 @@ func IsFileNotFound(err error) bool {
 		return false
 	}
 	return strings.Contains(err.Error(), errFileNotFound)
+}
+
+func LateInitializeFile(in *v1alpha1.FileParameters, file *gitlab.File) {
+	if file == nil {
+		return
+	}
+
+	if in.Encoding == nil {
+		in.Encoding = &file.Encoding
+	}
+
+	if in.ExecuteFilemode == nil {
+		in.ExecuteFilemode = &file.ExecuteFilemode
+	}
+}
+
+func GenerateGetFileOptions() *gitlab.GetFileOptions {
+	return &gitlab.GetFileOptions{}
 }
 
 // GenerateHookObservation is used to produce v1alpha1.HookObservation from
