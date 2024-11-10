@@ -3,7 +3,6 @@ package projects
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
 	secretstoreapi "github.com/crossplane-contrib/provider-gitlab/apis/v1alpha1"
@@ -94,6 +93,10 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errNotFile)
 	}
 
+	if cr.Spec.ForProvider.ProjectID == nil {
+		return managed.ExternalObservation{}, errors.New(errProjectIDMissing)
+	}
+
 	if meta.GetExternalName(cr) == "" {
 		return managed.ExternalObservation{
 			ResourceExists: false,
@@ -102,13 +105,15 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	file, res, err := e.client.GetFile(
 		*cr.Spec.ForProvider.ProjectID,
 		*cr.Spec.ForProvider.FilePath,
-		projects.GenerateGetFileOptions(),
+		projects.GenerateGetFileOptions(*&cr.Spec.ForProvider.Branch),
 		gitlab.WithContext(ctx))
 
 	current := cr.Spec.ForProvider.DeepCopy()
+	projects.LateInitializeFile(&cr.Spec.ForProvider, file)
+
+	cr.Status.AtProvider = projects.GenerateFileObservation(file)
 	cr.Status.SetConditions(xpv1.Available())
 
-	fmt.Println(file, res, err)
 	return managed.ExternalObservation{
 		ResourceExists:          true,
 		ResourceUpToDate:        projects.IsVariableUpToDate(&cr.Spec.ForProvider, variable),
