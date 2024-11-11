@@ -67,6 +67,10 @@ func LateInitializeFile(in *v1alpha1.FileParameters, file *gitlab.File) {
 	}
 }
 
+func IsFileUpToDate() bool {
+	return true
+}
+
 func GenerateGetFileOptions() *gitlab.GetFileOptions {
 	return &gitlab.GetFileOptions{}
 }
@@ -124,6 +128,19 @@ func GenerateUpdateFileOptions(p *v1alpha1.FileParameters, client client.Client,
 		Content:         p.Content,
 		CommitMessage:   p.CommitMessage,
 		ExecuteFilemode: p.ExecuteFilemode,
+	}
+
+	return o
+}
+
+func GenerateDeleteFileOptions(p *v1alpha1.FileParameters, client client.Client, ctx context.Context) *gitlab.DeleteFileOptions {
+	o := &gitlab.DeleteFileOptions{
+		Branch:        p.Branch,
+		StartBranch:   p.StartBranch,
+		AuthorEmail:   p.AuthorEmail,
+		AuthorName:    p.AuthorName,
+		CommitMessage: p.CommitMessage,
+		// LastCommitID: p.LastCommitID,
 	}
 
 	return o
