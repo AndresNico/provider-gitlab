@@ -67,7 +67,7 @@ func LateInitializeFile(in *v1alpha1.FileParameters, file *gitlab.File) {
 	}
 }
 
-func IsFileUpToDate() bool {
+func IsFileUpToDate(p *v1alpha1.FileParameters, g *gitlab.File) bool {
 	return true
 }
 

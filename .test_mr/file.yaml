@@ -1,0 +1,13 @@
+apiVersion: projects.gitlab.crossplane.io/v1alpha1
+kind: File
+metadata:
+  name: test-file
+spec:
+  forProvider:
+    branch: main
+    commitMessage: test
+    content: test
+    filePath: test
+    id: "64394756"
+  providerConfigRef:
+    name: gitlab-provider

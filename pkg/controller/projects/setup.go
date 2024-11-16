@@ -23,6 +23,7 @@ import (
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/accesstokens"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/deploykeys"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/deploytokens"
+	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/files"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/hooks"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/members"
 	"github.com/crossplane-contrib/provider-gitlab/pkg/controller/projects/pipelineschedules"
@@ -41,6 +42,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		variables.SetupVariable,
 		deploykeys.SetupDeployKey,
 		pipelineschedules.SetupPipelineSchedule,
+		files.SetupFile,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
