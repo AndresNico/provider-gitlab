@@ -19,7 +19,6 @@ package projects
 import (
 	"strings"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/xanzy/go-gitlab"
 	"golang.org/x/net/context"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -68,8 +67,12 @@ func LateInitializeFile(in *v1alpha1.FileParameters, file *gitlab.File) {
 	}
 }
 
-func GenerateGetFileOptions(ref *string) *gitlab.GetFileOptions {
-	return &gitlab.GetFileOptions{Ref: ref}
+func IsFileUpToDate(p *v1alpha1.FileParameters, g *gitlab.File) bool {
+	return true
+}
+
+func GenerateGetFileOptions() *gitlab.GetFileOptions {
+	return &gitlab.GetFileOptions{}
 }
 
 // GenerateHookObservation is used to produce v1alpha1.HookObservation from
@@ -130,6 +133,15 @@ func GenerateUpdateFileOptions(p *v1alpha1.FileParameters, client client.Client,
 	return o
 }
 
-func IsFileUpToDate(p *v1alpha1.FileParameters, g *gitlab.File) bool {
-	if !cmp.Equal(p.ProjectID, )
+func GenerateDeleteFileOptions(p *v1alpha1.FileParameters, client client.Client, ctx context.Context) *gitlab.DeleteFileOptions {
+	o := &gitlab.DeleteFileOptions{
+		Branch:        p.Branch,
+		StartBranch:   p.StartBranch,
+		AuthorEmail:   p.AuthorEmail,
+		AuthorName:    p.AuthorName,
+		CommitMessage: p.CommitMessage,
+		// LastCommitID: p.LastCommitID,
+	}
+
+	return o
 }

@@ -1,8 +1,8 @@
-package projects
+package files
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
 	secretstoreapi "github.com/crossplane-contrib/provider-gitlab/apis/v1alpha1"
@@ -17,10 +17,10 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 	"github.com/google/go-cmp/cmp"
+	"github.com/pkg/errors"
 	"github.com/xanzy/go-gitlab"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
 )
 
 const (
@@ -114,21 +114,60 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	cr.Status.AtProvider = projects.GenerateFileObservation(file)
 	cr.Status.SetConditions(xpv1.Available())
 
+	projects.LateInitializeFile(&cr.Spec.ForProvider, file)
+
+	cr.Status.AtProvider = projects.GenerateFileObservation(file)
+
+	fmt.Println(file, res, err)
 	return managed.ExternalObservation{
 		ResourceExists:          true,
-		ResourceUpToDate:        projects.IsVariableUpToDate(&cr.Spec.ForProvider, variable),
+		ResourceUpToDate:        projects.IsFileUpToDate(&cr.Spec.ForProvider, file),
 		ResourceLateInitialized: !cmp.Equal(current, &cr.Spec.ForProvider),
 	}, nil
 }
 
 func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
+	cr, ok := mg.(*v1alpha1.File)
+	if !ok {
+		return managed.ExternalCreation{}, errors.New(errNotFile)
+	}
+
+	cr.Status.SetConditions(xpv1.Creating())
+	fileOptions := projects.GenerateCreateFileOptions(&cr.Spec.ForProvider, e.kube, ctx)
+
+	file, _, err := e.client.CreateFile(cr.Spec.ForProvider.ProjectID, *cr.Spec.ForProvider.FilePath, fileOptions, gitlab.WithContext(ctx))
+
+	if err != nil {
+		return managed.ExternalCreation{}, err
+	}
+
+	meta.SetExternalName(cr, file.FilePath)
+	return managed.ExternalCreation{}, errors.Wrap(err, errKubeUpdateFailed)
 
 }
 
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
+	cr, ok := mg.(*v1alpha1.File)
+	if !ok {
+		return managed.ExternalUpdate{}, errors.New(errNotFile)
+	}
+
+	updateOptions := projects.GenerateUpdateFileOptions(&cr.Spec.ForProvider, e.kube, ctx)
+	_, _, err := e.client.UpdateFile(cr.Spec.ForProvider.ProjectID, *cr.Spec.ForProvider.FilePath, updateOptions, gitlab.WithContext(ctx))
+
+	return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 
 }
 
 func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
+	cr, ok := mg.(*v1alpha1.File)
+	if !ok {
+		return errors.New(errNotFile)
+	}
 
+	cr.Status.SetConditions(xpv1.Deleting())
+
+	deleteOptions := projects.GenerateDeleteFileOptions(&cr.Spec.ForProvider, e.kube, ctx)
+	_, err := e.client.DeleteFile(cr.Spec.ForProvider.ProjectID, *cr.Spec.ForProvider.FilePath, deleteOptions, gitlab.WithContext(ctx))
+	return errors.Wrap(err, errDeleteFailed)
 }
