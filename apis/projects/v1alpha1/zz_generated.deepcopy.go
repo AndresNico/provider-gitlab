@@ -687,11 +687,6 @@ func (in *FileParameters) DeepCopyInto(out *FileParameters) {
 		*out = new(string)
 		**out = **in
 	}
-	if in.Id != nil {
-		in, out := &in.Id, &out.Id
-		*out = new(string)
-		**out = **in
-	}
 	if in.AuthorEmail != nil {
 		in, out := &in.AuthorEmail, &out.AuthorEmail
 		*out = new(string)

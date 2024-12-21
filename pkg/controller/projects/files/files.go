@@ -2,7 +2,6 @@ package files
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1"
 	secretstoreapi "github.com/crossplane-contrib/provider-gitlab/apis/v1alpha1"
@@ -33,7 +32,7 @@ const (
 	errGetFailed        = "cannot retrieve Gitlab file with"
 )
 
-// SetupProject adds a controller that reconciles Projects.
+// SetupFile adds a controller that reconciles Files.
 func SetupFile(mgr ctrl.Manager, o controller.Options) error {
 	name := managed.ControllerName(v1alpha1.FileKind)
 
@@ -102,11 +101,19 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 			ResourceExists: false,
 		}, nil
 	}
+
+	fileOptions := projects.GenerateGetFileOptions(&cr.Spec.ForProvider, e.kube, ctx)
 	file, res, err := e.client.GetFile(
 		*cr.Spec.ForProvider.ProjectID,
 		*cr.Spec.ForProvider.FilePath,
-		projects.GenerateGetFileOptions(*&cr.Spec.ForProvider.Branch),
+		fileOptions,
 		gitlab.WithContext(ctx))
+	if err != nil {
+		if clients.IsResponseNotFound(res) {
+			return managed.ExternalObservation{}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(resource.Ignore(projects.IsFileNotFound, err), errGetFailed)
+	}
 
 	current := cr.Spec.ForProvider.DeepCopy()
 	projects.LateInitializeFile(&cr.Spec.ForProvider, file)
@@ -114,11 +121,6 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	cr.Status.AtProvider = projects.GenerateFileObservation(file)
 	cr.Status.SetConditions(xpv1.Available())
 
-	projects.LateInitializeFile(&cr.Spec.ForProvider, file)
-
-	cr.Status.AtProvider = projects.GenerateFileObservation(file)
-
-	fmt.Println(file, res, err)
 	return managed.ExternalObservation{
 		ResourceExists:          true,
 		ResourceUpToDate:        projects.IsFileUpToDate(&cr.Spec.ForProvider, file),
@@ -135,7 +137,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	cr.Status.SetConditions(xpv1.Creating())
 	fileOptions := projects.GenerateCreateFileOptions(&cr.Spec.ForProvider, e.kube, ctx)
 
-	file, _, err := e.client.CreateFile(cr.Spec.ForProvider.ProjectID, *cr.Spec.ForProvider.FilePath, fileOptions, gitlab.WithContext(ctx))
+	file, _, err := e.client.CreateFile(*cr.Spec.ForProvider.ProjectID, *cr.Spec.ForProvider.FilePath, fileOptions, gitlab.WithContext(ctx))
 
 	if err != nil {
 		return managed.ExternalCreation{}, err
@@ -153,7 +155,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	updateOptions := projects.GenerateUpdateFileOptions(&cr.Spec.ForProvider, e.kube, ctx)
-	_, _, err := e.client.UpdateFile(cr.Spec.ForProvider.ProjectID, *cr.Spec.ForProvider.FilePath, updateOptions, gitlab.WithContext(ctx))
+	_, _, err := e.client.UpdateFile(*cr.Spec.ForProvider.ProjectID, *cr.Spec.ForProvider.FilePath, updateOptions, gitlab.WithContext(ctx))
 
 	return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateFailed)
 
@@ -168,6 +170,6 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 	cr.Status.SetConditions(xpv1.Deleting())
 
 	deleteOptions := projects.GenerateDeleteFileOptions(&cr.Spec.ForProvider, e.kube, ctx)
-	_, err := e.client.DeleteFile(cr.Spec.ForProvider.ProjectID, *cr.Spec.ForProvider.FilePath, deleteOptions, gitlab.WithContext(ctx))
+	_, err := e.client.DeleteFile(*cr.Spec.ForProvider.ProjectID, *cr.Spec.ForProvider.FilePath, deleteOptions, gitlab.WithContext(ctx))
 	return errors.Wrap(err, errDeleteFailed)
 }

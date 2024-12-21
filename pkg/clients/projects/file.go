@@ -31,7 +31,7 @@ const (
 	errFileNotFound = "404 Not found"
 )
 
-// HookClient defines Gitlab Hook service operations
+// FileClient defines Gitlab File service operations
 type FileClient interface {
 	GetFile(pid interface{}, fileName string, opt *gitlab.GetFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.File, *gitlab.Response, error)
 	CreateFile(pid interface{}, fileName string, opt *gitlab.CreateFileOptions, options ...gitlab.RequestOptionFunc) (*gitlab.FileInfo, *gitlab.Response, error)
@@ -71,12 +71,12 @@ func IsFileUpToDate(p *v1alpha1.FileParameters, g *gitlab.File) bool {
 	return true
 }
 
-func GenerateGetFileOptions() *gitlab.GetFileOptions {
-	return &gitlab.GetFileOptions{}
+func GenerateGetFileOptions(p *v1alpha1.FileParameters, client client.Client, ctx context.Context) *gitlab.GetFileOptions {
+	return &gitlab.GetFileOptions{Ref: p.Branch}
 }
 
-// GenerateHookObservation is used to produce v1alpha1.HookObservation from
-// gitlab.Hook.
+// GenerateFileObservation is used to produce v1alpha1.FileObservation from
+// gitlab.File.
 func GenerateFileObservation(file *gitlab.File) v1alpha1.FileObservation {
 	if file == nil {
 		return v1alpha1.FileObservation{}

@@ -68,11 +68,6 @@ type FileParameters struct {
 	// +required
 	FilePath *string `json:"filePath"`
 
-	// Regex to check URL-encoding pattern!
-	// The ID or URL-encoded path of the project.
-	// +required
-	Id *string `json:"id"`
-
 	// The commit author’s email address.
 	// +optional
 	AuthorEmail *string `json:"authorEmail,omitempty"`
