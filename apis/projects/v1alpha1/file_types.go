@@ -37,7 +37,7 @@ type FileParameters struct {
 	// +optional
 	// +immutable
 	// +crossplane:generate:reference:type=github.com/crossplane-contrib/provider-gitlab/apis/projects/v1alpha1.Project
-	ProjectID *int `json:"projectId,omitempty"`
+	ProjectID *string `json:"projectId,omitempty"`
 
 	// ProjectIDRef is a reference to a project to retrieve its projectId.
 	// +optional
