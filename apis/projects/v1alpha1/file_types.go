@@ -93,7 +93,7 @@ type FileObservation struct {
 	Size            int    `json:"size"`
 	Encoding        string `json:"encoding"`
 	Content         string `json:"content"`
-	ContentSHA256   string `json:"ContentSHA256"`
+	SHA256          string `json:"ContentSHA256"`
 	Ref             string `json:"ref"`
 	BlobID          string `json:"blobID"`
 	CommitID        string `json:"commitID"`
