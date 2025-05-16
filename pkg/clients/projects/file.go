@@ -14,6 +14,8 @@ limitations under the License.
 package projects
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"strings"
 
 	gitlab "gitlab.com/gitlab-org/api/client-go"
@@ -65,6 +67,30 @@ func LateInitializeFile(in *v1alpha1.FileParameters, file *gitlab.File) {
 }
 
 func IsFileUpToDate(p *v1alpha1.FileParameters, g *gitlab.File) bool {
+	// if !cmp.Equal(p.Content, clients.StringToPtr(g.Content)) {
+	// 	fmt.Println("Content not equal cmp")
+	// 	return false
+	// }
+
+	if !clients.IsStringEqualToStringPtr(p.Content, g.Content) {
+		fmt.Println("Content not equal")
+		// fmt.Println(*p.Content)
+		h := sha256.New()
+		h.Write([]byte(*p.Content))
+		fmt.Printf("%x", h.Sum(nil))
+		fmt.Println(g.Content)
+		fmt.Println(g.SHA256)
+		return false
+	}
+	if !clients.IsStringEqualToStringPtr(p.Encoding, g.Encoding) {
+		fmt.Println("Encoding not equal")
+		return false
+	}
+	if !clients.IsBoolEqualToBoolPtr(p.ExecuteFilemode, g.ExecuteFilemode) {
+		fmt.Println("file mode not equal")
+		return false
+	}
+
 	return true
 }
 
@@ -116,15 +142,16 @@ func GenerateCreateFileOptions(p *v1alpha1.FileParameters, client client.Client,
 
 // GenerateEditFileOptions generates file edit options
 func GenerateUpdateFileOptions(p *v1alpha1.FileParameters, client client.Client, ctx context.Context) *gitlab.UpdateFileOptions {
+	cm := fmt.Sprintf("Update file %s", *p.FilePath)
 
 	o := &gitlab.UpdateFileOptions{
-		Branch:          p.Branch,
-		StartBranch:     p.StartBranch,
+		Branch: p.Branch,
+		// StartBranch:     p.StartBranch,
 		Encoding:        p.Encoding,
 		AuthorEmail:     p.AuthorEmail,
 		AuthorName:      p.AuthorName,
 		Content:         p.Content,
-		CommitMessage:   p.CommitMessage,
+		CommitMessage:   &cm,
 		ExecuteFilemode: p.ExecuteFilemode,
 	}
 
@@ -133,12 +160,14 @@ func GenerateUpdateFileOptions(p *v1alpha1.FileParameters, client client.Client,
 
 // GenerateDeleteFileOptions generates file delete options
 func GenerateDeleteFileOptions(p *v1alpha1.FileParameters, client client.Client, ctx context.Context) *gitlab.DeleteFileOptions {
+	cm := fmt.Sprintf("Delete file %s", *p.FilePath)
+
 	o := &gitlab.DeleteFileOptions{
-		Branch:        p.Branch,
-		StartBranch:   p.StartBranch,
+		Branch: p.Branch,
+		// StartBranch:   p.StartBranch,
 		AuthorEmail:   p.AuthorEmail,
 		AuthorName:    p.AuthorName,
-		CommitMessage: p.CommitMessage,
+		CommitMessage: &cm,
 		// LastCommitID: p.LastCommitID,
 	}
 
