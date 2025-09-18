@@ -116,6 +116,14 @@ var (
 	RunnerGroupVersionKind = SchemeGroupVersion.WithKind(RunnerKind)
 )
 
+// File type metadata
+var (
+	FileKind             = reflect.TypeOf(File{}).Name()
+	FileGroupKind        = schema.GroupKind{Group: Group, Kind: FileKind}.String()
+	FileKindAPIVersion   = FileKind + "." + SchemeGroupVersion.String()
+	FileGroupVersionKind = SchemeGroupVersion.WithKind(FileKind)
+)
+
 func init() {
 	SchemeBuilder.Register(&Project{}, &ProjectList{})
 	SchemeBuilder.Register(&Hook{}, &HookList{})
@@ -127,4 +135,5 @@ func init() {
 	SchemeBuilder.Register(&AccessToken{}, &AccessTokenList{})
 	SchemeBuilder.Register(&PipelineSchedule{}, &PipelineScheduleList{})
 	SchemeBuilder.Register(&Runner{}, &RunnerList{})
+	SchemeBuilder.Register(&File{}, &FileList{})
 }
